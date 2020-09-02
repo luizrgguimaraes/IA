@@ -5,6 +5,7 @@ import math
 #------------------------------------------------Entrada do Usuario
 m = int(input("Digite a largura do mapa:"))
 n = int(input("Digite a altura do mapa:"))
+fixa = int(input("Mapa Fixo(1) ou Aleatorio(0):"))
 print ("\n")
 
 #------------------------------------------------Constantes
@@ -14,6 +15,7 @@ _TERRA = 1
 _MOVEDICA = 6
 _VISITADO = 10
 _ESCOLHIDO = 11
+_ATUAL = 12
 _ERRADO = 13
 
 #------------------------------------------------Classes
@@ -38,7 +40,7 @@ class Estado:
         x = self.x + (movimento.x)
         y = self.y + (movimento.y)
 
-        print(movimento.imprimir()+"=("+str(x)+","+str(y)+")")
+        print("TENTATIVA MOVIMENTO: "+movimento.imprimir()+"=("+str(x)+","+str(y)+")")
         if x < 0 or x >=m or y < 0 or y >=n:
             print("Invalido - Fronteiras")
             return None
@@ -51,7 +53,7 @@ class Estado:
         #verificar se já existe um caminho para este ponto com menor acumulo
         repetido = getFila(x,y)
         if repetido:
-            print("é repetido")
+            print("repetido")
             if repetido.acumulado > (self.acumulado + a):
                 print("substituiu")
                 fila[fila.index(repetido)]=self
@@ -87,7 +89,7 @@ class Posicao:
         #self.status = status
 
 class Mapa:
-    def __init__(self,m,n):
+    def __init__(self,m,n,fixa):
         self.m = m
         self.n = n
         #self.objetivo = None
@@ -95,15 +97,26 @@ class Mapa:
 
         tipos = [_BARREIRA,_AGUA,_MOVEDICA,_TERRA]
         lista = []
-        #listafixa = [1,6,3,1,0,1,0,3,1,6,0,0,0,0,0,0,3,3,6,6,6,0,6,6,1]
-        for i in range(m):
-            for j in range(n):
-                codPosicao = m*i+j
-                if codPosicao==0 or codPosicao==m*n-1:
-                    lista.append(Posicao(_TERRA))
-                else:
-                    lista.append(Posicao(tipos[randrange(0,4)]))
-                #lista.append(Posicao(listafixa[codPosicao]))
+        if fixa:
+            listafixa = [1,0,3,3,3,3,3
+                        ,6,6,1,1,6,6,3
+                        ,0,1,0,6,6,0,3
+                        ,1,0,0,0,1,3,0
+                        ,3,0,1,0,3,3,1
+                        ,1,0,3,6,0,0,0
+                        ,6,0,0,1,1,0,1]
+            for i in range(m):
+                for j in range(n):
+                    codPosicao = m*i+j
+                    lista.append(Posicao(listafixa[codPosicao]))
+        else:
+            for i in range(m):
+                for j in range(n):
+                    codPosicao = m*i+j
+                    if codPosicao==0 or codPosicao==m*n-1:
+                        lista.append(Posicao(_TERRA))
+                    else:
+                        lista.append(Posicao(tipos[randrange(0,4)]))
         self.posicoes = np.array(lista)
         self.posicoes = self.posicoes.reshape(m,n)
         
@@ -150,7 +163,7 @@ def criterioClassificacao(e):
 def imprimirFila(nivel):
     s=""
     for a in fila:
-        s+=a.imprimir()
+        s+=a.imprimir()+"\n"
     print("Fila="+s)
 
 def popFila(nivel):
@@ -166,13 +179,13 @@ def popFila(nivel):
 def getFila(x,y):
     for ponto in fila:
         if ponto.x == x and ponto.y == y:
-            print("encontrou")
+            #print("encontrou")
             return ponto
     return None
 
-def busca(estado,mapa,voltarNivel):
-    estado.status = _ESCOLHIDO
-    print("---------------"+estado.imprimir(True))
+def busca(estado,mapa,voltarNivel,nivel):
+    estado.status = _ATUAL
+    print("--BUSCA NIVEL "+str(nivel)+"-------------"+estado.imprimir(True))
     flagNenhumEstadoValido = True
     for movimento in movimentosPossiveis:
         estado_temp = estado.movimentar(movimento,mapa,estado.nivel)
@@ -192,6 +205,7 @@ def busca(estado,mapa,voltarNivel):
 
     mapa.imprimir()
     input("continue")
+    estado.status = _ESCOLHIDO
 
     nivel = estado.nivel
     if flagNenhumEstadoValido:
@@ -200,6 +214,7 @@ def busca(estado,mapa,voltarNivel):
         estado.status = _ERRADO
     else:
         nivel += 1
+        voltarNivel = 0
 
 
     r = None    
@@ -207,11 +222,11 @@ def busca(estado,mapa,voltarNivel):
         novoestado=popFila(nivel)
         if not(novoestado):
             return None
-        r = busca(novoestado,mapa,voltarNivel)    
+        r = busca(novoestado,mapa,voltarNivel,nivel)    
     return r
 
 
-mapa = Mapa(m,n)
+mapa = Mapa(m,n,fixa)
 estadoInicial = Estado(0,0,None,0,mapa)
 fila = [estadoInicial]
 movimentosPossiveis = [
@@ -227,8 +242,8 @@ movimentosPossiveis = [
 #print(mapa.posicoes)
 #
 #print(mapa.custo)
-simbolos = {_AGUA:"~",_BARREIRA:"#",_MOVEDICA:"+",_TERRA:" ",_VISITADO:"?",_ESCOLHIDO:"@",_ERRADO:"x"}
+simbolos = {_AGUA:"~",_BARREIRA:"#",_MOVEDICA:"+",_TERRA:" ",_VISITADO:"?",_ESCOLHIDO:"*",_ERRADO:"X",_ATUAL:"@"}
 mapa.imprimir()
-busca(estadoInicial,mapa,0)
+busca(estadoInicial,mapa,0,0)
 mapa.imprimir()
 
