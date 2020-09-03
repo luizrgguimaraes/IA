@@ -2,12 +2,6 @@ from random import randrange
 import numpy as np
 import math
 
-#------------------------------------------------Entrada do Usuario
-m = int(input("Digite a largura do mapa:"))
-n = int(input("Digite a altura do mapa:"))
-fixa = int(input("Mapa Fixo(1) ou Aleatorio(0):"))
-print ("\n")
-
 #------------------------------------------------Constantes
 _BARREIRA = 0
 _AGUA = 3
@@ -17,6 +11,27 @@ _VISITADO = 10
 _ESCOLHIDO = 11
 _ATUAL = 12
 _ERRADO = 13
+_SUCESSO = 14
+#------------------------------------------------Entrada do Usuario
+m = int(input("Digite a largura do mapa:"))
+n = int(input("Digite a altura do mapa:"))
+fixa = int(input("Mapa Fixo(1) ou Aleatorio(0):"))
+if fixa == 1:
+    listafixa = []
+    print("BARREIRA(0)   TERRA(1)    AGUA(3)     AREIA MOVEDICA(6)")
+    for i in range(m):
+        for j in range(n):
+            codPosicao = m*i+j
+            if codPosicao==0 or codPosicao==m*n-1:
+                listafixa.append(_TERRA)
+            else:
+                custo = int(input("Digite o elemento "+str(codPosicao+1)+"/"+str(m*n)+":"))
+                listafixa.append(custo)
+intermitente = int(input("Processamento Intermitente(1) ou Continuo(0):"))
+
+print ("\n")
+
+
 
 #------------------------------------------------Classes
 class Estado:
@@ -98,13 +113,13 @@ class Mapa:
         tipos = [_BARREIRA,_AGUA,_MOVEDICA,_TERRA]
         lista = []
         if fixa:
-            listafixa = [1,0,3,3,3,3,3
-                        ,6,6,1,1,6,6,3
-                        ,0,1,0,6,6,0,3
-                        ,1,0,0,0,1,3,0
-                        ,3,0,1,0,3,3,1
-                        ,1,0,3,6,0,0,0
-                        ,6,0,0,1,1,0,1]
+            # listafixa = [1,0,3,3,3,3,3
+            #             ,6,6,1,1,6,6,3
+            #             ,0,1,0,6,6,0,3
+            #             ,1,0,0,0,1,3,0
+            #             ,3,0,1,0,3,3,1
+            #             ,1,0,3,6,0,0,0
+            #             ,6,0,0,1,1,0,1]
             for i in range(m):
                 for j in range(n):
                     codPosicao = m*i+j
@@ -194,7 +209,7 @@ def busca(estado,mapa,voltarNivel,nivel):
         flagNenhumEstadoValido = False
         if estado_temp.igual(m-1,n-1):
             fila.append(estado_temp)
-            estado_temp.status = _ESCOLHIDO
+            estado_temp.status = _SUCESSO
             print("Resultado:"+estado_temp.imprimir(True))
             return estado_temp
         print(estado.imprimir()+">>>"+movimento.imprimir()+"="+estado_temp.imprimir())
@@ -203,8 +218,10 @@ def busca(estado,mapa,voltarNivel,nivel):
         fila.sort(key=criterioClassificacao)
         imprimirFila(estado.nivel+1)
 
-    mapa.imprimir()
-    input("continue")
+    if intermitente:
+        mapa.imprimir()
+        input("continue")
+
     estado.status = _ESCOLHIDO
 
     nivel = estado.nivel
@@ -242,7 +259,7 @@ movimentosPossiveis = [
 #print(mapa.posicoes)
 #
 #print(mapa.custo)
-simbolos = {_AGUA:"~",_BARREIRA:"#",_MOVEDICA:"+",_TERRA:" ",_VISITADO:"?",_ESCOLHIDO:"*",_ERRADO:"X",_ATUAL:"@"}
+simbolos = {_AGUA:"~",_BARREIRA:"#",_MOVEDICA:"+",_TERRA:" ",_VISITADO:"?",_ESCOLHIDO:"*",_ERRADO:"X",_ATUAL:"@",_SUCESSO:"$"}
 mapa.imprimir()
 busca(estadoInicial,mapa,0,0)
 mapa.imprimir()
