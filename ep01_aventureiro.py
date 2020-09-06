@@ -16,17 +16,17 @@ _SUCESSO = 14
 m = int(input("Digite a largura do mapa:"))
 n = int(input("Digite a altura do mapa:"))
 fixa = int(input("Mapa Fixo(1) ou Aleatorio(0):"))
-if fixa == 1:
-    listafixa = []
-    print("BARREIRA(0)   TERRA(1)    AGUA(3)     AREIA MOVEDICA(6)")
-    for i in range(m):
-        for j in range(n):
-            codPosicao = m*i+j
-            if codPosicao==0 or codPosicao==m*n-1:
-                listafixa.append(_TERRA)
-            else:
-                custo = int(input("Digite o elemento "+str(codPosicao+1)+"/"+str(m*n)+":"))
-                listafixa.append(custo)
+# if fixa == 1:
+#     listafixa = []
+#     print("BARREIRA(0)   TERRA(1)    AGUA(3)     AREIA MOVEDICA(6)")
+#     for i in range(m):
+#         for j in range(n):
+#             codPosicao = m*i+j
+#             if codPosicao==0 or codPosicao==m*n-1:
+#                 listafixa.append(_TERRA)
+#             else:
+#                 custo = int(input("Digite o elemento "+str(codPosicao+1)+"/"+str(m*n)+":"))
+                # listafixa.append(custo)
 intermitente = int(input("Processamento Intermitente(1) ou Continuo(0):"))
 
 print ("\n")
@@ -69,13 +69,28 @@ class Estado:
         repetido = getFila(x,y)
         if repetido:
             print("repetido")
-            if repetido.acumulado > (self.acumulado + a):
+            if repetido.acumulado >= (self.acumulado + a):
                 print("substituiu")
                 fila[fila.index(repetido)]=self
             else:
                 print("Invalido - repetido e tem maior ou igual acumulo:")
                 return None
         
+        estado_temp = Estado(x,y,self,nivel+1,mapa)
+        return estado_temp
+    def movimentarAvancado(self,movimento,mapa,nivel):
+        x = self.x + (movimento.x)
+        y = self.y + (movimento.y)
+
+        print("TENTATIVA MOVIMENTO: "+movimento.imprimir()+"=("+str(x)+","+str(y)+")")
+        if x < 0 or x >=m or y < 0 or y >=n:
+            print("Invalido - Fronteiras")
+            return None
+
+        if mapa.getCusto(x,y)==_BARREIRA:
+            print("Invalido - Barreira")
+            return None
+
         estado_temp = Estado(x,y,self,nivel+1,mapa)
         return estado_temp
 
@@ -113,13 +128,13 @@ class Mapa:
         tipos = [_BARREIRA,_AGUA,_MOVEDICA,_TERRA]
         lista = []
         if fixa:
-            # listafixa = [1,0,3,3,3,3,3
-            #             ,6,6,1,1,6,6,3
-            #             ,0,1,0,6,6,0,3
-            #             ,1,0,0,0,1,3,0
-            #             ,3,0,1,0,3,3,1
-            #             ,1,0,3,6,0,0,0
-            #             ,6,0,0,1,1,0,1]
+            listafixa = [1,6,0,1,6,3,1
+                        ,6,0,0,1,3,1,6
+                        ,3,6,1,6,0,6,1
+                        ,3,1,3,3,1,0,6
+                        ,6,1,3,6,6,3,0
+                        ,0,1,0,3,6,6,1
+                        ,0,1,0,3,0,0,1]
             for i in range(m):
                 for j in range(n):
                     codPosicao = m*i+j
@@ -175,13 +190,13 @@ class Mapa:
 def criterioClassificacao(e):
     return e.acumulado
 
-def imprimirFila(nivel):
+def imprimirFila():
     s=""
     for a in fila:
         s+=a.imprimir()+"\n"
     print("Fila="+s)
 
-def popFila(nivel):
+def popFila(nivel,fila):
 
     for a in fila:
         if a.nivel  == nivel and a.status < _ESCOLHIDO:#somente os visitados
@@ -214,12 +229,15 @@ def busca(estado,mapa,voltarNivel,nivel):
             return estado_temp
         print(estado.imprimir()+">>>"+movimento.imprimir()+"="+estado_temp.imprimir())
         #fila.insert(0,estado_temp)
+        buscaAvancada(estado_temp,mapa,estado_temp.nivel)
         fila.append(estado_temp)
-        fila.sort(key=criterioClassificacao)
-        imprimirFila(estado.nivel+1)
+        
+    fila.sort(key=criterioClassificacao)
+    imprimirFila()
 
     if intermitente:
         mapa.imprimir()
+        imprimirFila()
         input("continue")
 
     estado.status = _ESCOLHIDO
@@ -227,25 +245,47 @@ def busca(estado,mapa,voltarNivel,nivel):
     nivel = estado.nivel
     if flagNenhumEstadoValido:
         nivel -= voltarNivel
-        voltarNivel += 1
+        voltarNivel = 1
         estado.status = _ERRADO
+        print("ERRADO - novonivel="+str(nivel)+"::voltarNivel="+str(voltarNivel))
     else:
         nivel += 1
         voltarNivel = 0
+        print("CERTO - novonivel="+str(nivel)+"::voltarNivel="+str(voltarNivel))
 
 
     r = None    
     while r == None:
-        novoestado=popFila(nivel)
+        novoestado=popFila(nivel,fila)
         if not(novoestado):
+            print("novoEstado=NULL")
             return None
+        print("novoEstado="+novoestado.imprimir())
+        #verificar se nao há um estado melhor na fila avancada
+        novoEstadoAvancado = popFila(nivel,filaAvancada)
+        if novoEstadoAvancado:
+            if novoestado.acumulado > novoEstadoAvancado.acumulado:
+                novoestado = novoEstadoAvancado
+                fila.append(novoestado)
+        print(">>>>>>BUSCA")
         r = busca(novoestado,mapa,voltarNivel,nivel)    
+        print("<<<<<<BUSCA")
+    print("RETURN R")
     return r
 
+def buscaAvancada(estado,mapa,nivel):
+    print("--BUSCA AVANCADA NIVEL "+str(nivel)+"-------------"+estado.imprimir(True))
+    for movimento in movimentosPossiveis:
+        estado_temp = estado.movimentarAvancado(movimento,mapa,estado.nivel)
+        if estado_temp == None:
+            continue
+        print(estado.imprimir()+">>>"+movimento.imprimir()+"="+estado_temp.imprimir())
+        filaAvancada.append(estado_temp)
 
 mapa = Mapa(m,n,fixa)
 estadoInicial = Estado(0,0,None,0,mapa)
 fila = [estadoInicial]
+filaAvancada = []
 movimentosPossiveis = [
     Movimento(0,1)#norte
     ,Movimento(1,1)#nordeste
