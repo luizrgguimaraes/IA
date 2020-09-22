@@ -1,25 +1,3 @@
-'''
-    montar colecao de cidades
-        Nome
-        Valor
-        Tempo
-        Peso
-    montar colecao de custos
-        Cidade 1
-        Cidade 2
-        Tempo
-        Custo
-#montar populacao inicial com 10 individuos
-#definir funcao de fitness
-    #tempo maximo = 72 horas
-    #peso maximo = 20 Kg
-
-#mutar populacao inicial
-#cross over da populacao atual e mutada
-#classificar populacao total
-#comparar fitness atual com fitness anterior
-
-'''
 from random import random
 from random import randrange
 from random import shuffle
@@ -53,7 +31,7 @@ class Individuo:
         strcaminho += " >>> " + cidades[0].nome
         print(strcaminho+"\n"+self.fit.imprimir()+"\n"+self.origem+str(self.nivel))
     def mutacao(self):
-        for x in range(10):
+        for x in range(1):
             posicao1 = randrange(0,13)
             posicao2 = randrange(0,13)
             novoCaminho = list(self.caminho)
@@ -61,14 +39,13 @@ class Individuo:
             novoCaminho[posicao1] = novoCaminho[posicao2]
             novoCaminho[posicao2] = temp
 
-        novaqtd = randrange(3,13)
+        novaqtd = randrange(1,14)
         
-        novofit = fitness(novoCaminho,novaqtd+1)
+        novofit = fitness(novoCaminho,novaqtd)
         if novofit:
-            return Individuo(novoCaminho,novaqtd+1,novofit,self.origem+str(self.nivel)+"m",self.nivel)
+            return Individuo(novoCaminho,novaqtd,novofit,self.origem+str(self.nivel)+"m",self.nivel)
         else:
             return None
-
 
 
 class Fit:
@@ -79,6 +56,7 @@ class Fit:
         self.valorTotal = valorTotal
         self.pesoTotal = pesoTotal   
         self.premio = self.valorTotal - self.custoTotal
+        self.fit = self.premio + 1/self.qtdCidades
     def imprimir(self):
         return "("+str(self.qtdCidades)+" cidades por " + str(self.tempoTotal) +" horas com "+str(self.pesoTotal)+"Kg | Custo: R$ "+ str(self.custoTotal)+" | Faturamento: R$ "+ str(self.valorTotal) +" | Lucro: R$ " + str(self.premio)+")"
     
@@ -125,6 +103,13 @@ temposTransportes = temposTransportes.reshape(14,14)
 custosTransportes = np.array(custosTransportes)
 custosTransportes = custosTransportes.reshape(14,14)
 file.close()
+
+# for i in temposTransportes:
+#     print(i)
+
+# for i in custosTransportes:
+#     print(i)
+
 
 def printTransporte(x,y):
     origem = cidades[x].nome
@@ -192,7 +177,7 @@ def crossover(individuo1,individuo2):
             alt = 0
             i1 += 1
 
-    qtd = randrange(0,14)
+    qtd = randrange(1,14)
     
     # print(caminho)
     # print(qtd)
@@ -207,7 +192,8 @@ def crossover(individuo1,individuo2):
 
 
 def criterioClassificacao(e):
-    return e.fit.premio
+    return e.fit.fit
+
 def imprimirPopulacao(populacao,max = 10):
     i = 0
     for individuo in populacao:
@@ -217,8 +203,15 @@ def imprimirPopulacao(populacao,max = 10):
         if i >= max:
             break
 #-----------------------------SCRIPT---------------------------------------------------------        
+
+_MAX_TENTATIVAS = 100000
+_MAX_VEZES_FIT_IGUAL = 1000
+    
+
+
+
 #gerar populacao inicial com 10 individuos
-def executar():
+def executar(melhor_Resultado_geral):
     populacao = []
     while len(populacao) < 10:
         caminho = gerarCaminho()
@@ -233,8 +226,6 @@ def executar():
 
 
     #mutar 0s 10 primeiro individuos da populacao
-    _MAX_TENTATIVAS = 10000
-    _MAX_VEZES_FIT_IGUAL = 100
     ntentativa = 0
     fit_anterior = 0
     qtdvezes_fit_igual = 0
@@ -274,29 +265,34 @@ def executar():
         populacao.sort(key=criterioClassificacao,reverse=True)
 
         populacao = list(populacao[0:10])
+        # imprimirPopulacao(populacao)
 
-        fit_atual = populacao[0].fit.premio
+        fit_atual = populacao[0].fit.fit
         if fit_atual == fit_anterior:
             qtdvezes_fit_igual += 1
         else:
             qtdvezes_fit_igual = 0
         fit_anterior = fit_atual
         
-        if qtdvezes_fit_igual >= _MAX_VEZES_FIT_IGUAL:
+        if qtdvezes_fit_igual >= _MAX_VEZES_FIT_IGUAL and populacao[0].fit.premio > melhor_Resultado_geral:
             break
 
         # print(fit_atual)
-
+    populacao[0].imprimir()
     return [ntentativa,populacao[0].fit.premio,populacao[0].qtd,populacao[0].caminho,populacao[0].origem]
     # print("ITERACAO "+str(ntentativa))
     # imprimirPopulacao(populacao,1)
 
-for i in range(10):
-    resultado = executar()
+melhor_Resultado_geral = 0
+while True:
+    resultado = executar(melhor_Resultado_geral)
+    if resultado[1] > melhor_Resultado_geral:
+        melhor_Resultado_geral = resultado[1]
     print(resultado)
     user = input("Quit (q) or ENTER")
-    if user = "q":
+    if user == "q":
         break
+    print("\n\n")
 
 # fit = fitness([8],1)
 # individuo = Individuo([8],1,fit)
