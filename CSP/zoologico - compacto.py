@@ -59,7 +59,6 @@ _REGRA_ATRIBUICAO = 0
 def regraAtribuicao(animais,animal_id,njaula):
     global qtdpassos
     qtdpassos += 1        
-    print(">>> ATRIBUINDO "+ animais[animal_id].nome + " = " + str(njaula))
     animais[animal_id].jaulas = [njaula]
     return _SATISFEITA
 
@@ -67,7 +66,6 @@ _REGRA_DIFERENTE = 1
 def regraDiferente(animais,a,b):
     global qtdpassos
     qtdpassos += 1        
-    print(">>> JAULA "+ animais[a].nome + " DIFERENTE DE " + animais[b].nome)
     len1 = len(animais[a].jaulas)
     len2 = len(animais[b].jaulas)
     if len1 == 1 and len2 == 1:
@@ -89,7 +87,6 @@ _REGRA_IGUAL = 2
 def regraIgual(animais,a,b):
     global qtdpassos
     qtdpassos += 1        
-    print(">>> JAULA "+ animais[a].nome + " MESMA DE " + animais[b].nome)
     
     if len(animais[a].jaulas) < len(animais[b].jaulas):
         animais[b].jaulas = list(animais[a].jaulas)
@@ -107,7 +104,6 @@ _REGRA_LONGE = 3
 def regraLonge(animais,a,b):
     global qtdpassos
     qtdpassos += 1        
-    print(">>> JAULA "+ animais[a].nome + " LONGE DE " + animais[b].nome)
     
     if len(animais[a].jaulas) == 1:
         if animais[a].jaulas[0] in animais[b].jaulas:
@@ -125,7 +121,7 @@ _REGRA_TODOS_ALOCADOS = 4
 def regraTodosAlocados(animais):
     global qtdpassos
     qtdpassos += 1        
-    print(">>> TODOS ALOCADOS")
+    
     for animal in animais:
         if len(animal.jaulas) == 0:
             return _IMPOSSIVEL
@@ -136,15 +132,15 @@ def regraTodosAlocados(animais):
 restricoes = [
     # (TIPO DE REGRA,   PARAMETRO1, PARAMETRO2)
     (_REGRA_ATRIBUICAO, _LEAO,      1           )
+    ,(_REGRA_LONGE,     _LEAO,      _ANTILOPE   )
+    ,(_REGRA_LONGE,     _TIGRE,     _ANTILOPE   )
     ,(_REGRA_DIFERENTE, _LEAO,      _TIGRE      )
-    ,(_REGRA_IGUAL,     _SURICATE,  _JAVALI     )
-    ,(_REGRA_IGUAL,     _HIENA,     _TIGRE      )
     ,(_REGRA_DIFERENTE, _TIGRE,     _SURICATE   )
     ,(_REGRA_DIFERENTE, _TIGRE,     _JAVALI     )
     ,(_REGRA_DIFERENTE, _TIGRE,     _PAVAO      )
-    ,(_REGRA_LONGE,     _LEAO,      _ANTILOPE   )
-    ,(_REGRA_LONGE,     _TIGRE,     _ANTILOPE   )
     ,(_REGRA_DIFERENTE, _PAVAO,     _LEAO       )
+    ,(_REGRA_IGUAL,     _SURICATE,  _JAVALI     )
+    ,(_REGRA_IGUAL,     _HIENA,     _TIGRE      )
     ,(_REGRA_TODOS_ALOCADOS, None, None)
     ]
 
@@ -172,21 +168,14 @@ def aplicarRegras(animais,restricoes):
     nrestricao = 0
     while len(restricoes)>0 and nrestricao < len(restricoes):
         restricao = restricoes[nrestricao]
-        print("**** APLICAR RESTRICAO "+str(nrestricao+1)+"/"+str(len(restricoes)))
         resultadoRegra = aplicar(animais,restricao)
         
-        print(status[resultadoRegra])
-        imprimirJaulas(animais)
-        print(restricoes)
-
         if resultadoRegra == _IMPOSSIVEL:
             return _IMPOSSIVEL
         if resultadoRegra == _SATISFEITA:
-            print("remover regra "+str(nrestricao))
             restricoes.pop(nrestricao)
         else:
             nrestricao += 1    
-        # input()
     
     if len(restricoes) == 0:
         return _SATISFEITA
@@ -197,15 +186,11 @@ def aplicarRegras(animais,restricoes):
 
 def backTracking(animais,restricoes,nivel):
     global qtdpassos
-    print("\n"+"*************** BACKTRACKING nivel " + str(nivel))
     validacaoRegras = aplicarRegras(animais,restricoes)
     if validacaoRegras == _SATISFEITA:
-        print("\n"+"                    FINALIZADO COM SUCESSO")
         imprimirJaulas(animais)
-        print("QTD OPERACOES = " + str(qtdpassos))
         return True
     if validacaoRegras == _IMPOSSIVEL:
-        print("AVISO - AS RESTRICOES NAO FORAM SATISFEITAS")
         return False
     
     # MCV
@@ -224,9 +209,7 @@ def backTracking(animais,restricoes,nivel):
         for j in animais[a].jaulas:
             cloneanimais = deepcopy(animais)
             clonerestricoes = deepcopy(restricoes)
-            print("\n"+"******* ATRIBUICAO nivel " + str(nivel))
             regraAtribuicao(cloneanimais,a,j)
-            imprimirJaulas(cloneanimais)
             # input()
             cloneanimais.sort(key=criterioId,reverse=False)
             if backTracking(cloneanimais,clonerestricoes,nivel+1) == True:
@@ -239,6 +222,7 @@ def backTracking(animais,restricoes,nivel):
 # print("\n"+"**************************************************************** INICIO ********************")
 #imprimirJaulas(animais)
 backTracking(animais,restricoes,0)
+print(qtdpassos)
 
 
 
